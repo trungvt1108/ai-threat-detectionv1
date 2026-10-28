@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><title>{{ title }}</title>
+<style>body{font-family:"Segoe UI",system-ui,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#1d232b;line-height:1.45}
+pre{white-space:pre-wrap;word-break:break-word;background:#f3f5f8;border:1px solid #d9dee5;padding:12px;font-family:Consolas,Menlo,monospace;font-size:13px}
+.draft{background:#fdf0dc;border:1px solid #f0d1a2;padding:8px 12px}</style></head>
+<body>
+{% if data.public_draft %}<p class="draft">DRAFT công khai — cần người review trước khi chia sẻ.</p>{% endif %}
+<p>Báo cáo {{ title }} · tạo lúc {{ data.generated_at }} · dữ liệu từ DB/run thật của console local.</p>
+<pre>{{ md }}</pre>
+</body></html>

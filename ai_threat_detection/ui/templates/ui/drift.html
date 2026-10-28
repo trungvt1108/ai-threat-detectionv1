@@ -1,0 +1,28 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Drift & chất lượng{% endblock %}
+{% block content %}
+<h1>Drift &amp; chất lượng dữ liệu</h1>
+<form method="get" class="filters"><label>Namespace <select name="namespace">{% for n in namespaces %}<option {% if n == namespace %}selected{% endif %}>{{ n }}</option>{% empty %}<option>live</option>{% endfor %}</select></label><button type="submit" class="secondary">Xem</button></form>
+<p class="note">Drift là tín hiệu sức khỏe của giả định model (phân phối feature, missingness, score, tuổi model). Nó không chứng minh có tấn công và không tự kích hoạt retrain.</p>
+{% for r in reports %}
+<section class="panel"><h2>{{ r.domain }} {% include "ui/_status.html" with s=r.ml_status %}</h2>
+{% if not r.available %}<p class="muted">Không có model active ({{ r.ml_reason }}) — không tính drift.</p>{% else %}
+<p class="small">Model <span class="mono">{{ r.model_id }}</span>, tuổi {{ r.model_age_days }} ngày; {{ r.recent_windows }} cửa sổ gần nhất của namespace so với {{ r.reference }}.</p>
+<div class="tablewrap"><table><thead><tr><th>Feature</th><th class="num">PSI</th><th>Mức</th><th class="num">n</th><th class="num">Thiếu</th><th class="num">Median train</th><th class="num">Median gần đây</th></tr></thead><tbody>
+{% for f in r.features %}<tr><td class="mono">{{ f.feature }}</td><td class="num">{{ f.psi|num:3 }}</td><td>{{ f.band }}</td><td class="num">{{ f.n }}</td><td class="num">{{ f.missing }}</td><td class="num">{{ f.baseline_median|num }}</td><td class="num">{{ f.recent_median|num }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="small">Tỷ lệ ML abstain: gần đây {{ r.abstain_ratio_recent|pct }} · train {{ r.abstain_ratio_train|pct }}. Score: median gần đây {{ r.score.recent_median|num }} vs train {{ r.score.train_median|num }}; p95 {{ r.score.recent_p95|num }} vs {{ r.score.train_p95|num }}; {{ r.score.recent_above_threshold }} / {{ r.score.n }} vượt ngưỡng.</p>
+<p class="small muted">PSI theo decile của train (eps 1e-4); &lt;0.1 ổn định, 0.1–0.25 lệch vừa, &gt;0.25 lệch lớn (quy ước thông dụng, không phải kiểm định thống kê).</p>
+{% endif %}
+</section>
+{% endfor %}
+<h2>Ingest gần đây (namespace {{ namespace }})</h2>
+<div class="tablewrap"><table><thead><tr><th>Nguồn</th><th>Chế độ</th><th>Trạng thái</th><th class="num">Nhận</th><th class="num">Từ chối</th><th>Lý do</th><th class="num">Late</th><th class="num">Future</th><th class="num">Gap lớn nhất (s)</th><th>Event time cuối</th></tr></thead><tbody>
+{% for r in runs %}<tr><td>{{ r.source.name }}</td><td>{{ r.mode }}</td><td>{% include "ui/_status.html" with s=r.status %}</td><td class="num">{{ r.accepted|num }}</td><td class="num">{{ r.rejected|num }}</td>
+<td class="small">{% for k, v in r.reject_reasons.items %}{{ k }}: {{ v }} {% endfor %}</td><td class="num">{{ r.late_events }}</td><td class="num">{{ r.future_events }}</td><td class="num">{{ r.max_event_gap_seconds|num:1 }}</td><td class="small">{{ r.last_event_time|date:"Y-m-d H:i:s" }}</td></tr>
+{% empty %}<tr><td colspan="10" class="muted">Không có.</td></tr>{% endfor %}
+</tbody></table></div>
+<h2>Watermark phát hiện</h2>
+<ul class="small">{% for c in checkpoints %}<li>{{ c.domain }} cfg {{ c.cfg_hash }}: đã đóng cửa sổ tới {{ c.processed_until|date:"Y-m-d H:i:s" }} UTC ({{ c.windows_built }} cửa sổ)</li>{% empty %}<li class="muted">Chưa có.</li>{% endfor %}</ul>
+{% endblock %}

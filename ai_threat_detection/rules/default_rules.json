@@ -1,0 +1,252 @@
+{
+  "pack": "atd-default-rules",
+  "pack_version": "1.1.1",
+  "note": "Thresholds are starting points chosen from the rule descriptions below, not tuned on any test set. Window size changes their meaning: they assume the 300 s default window unless a rule says otherwise. Categories: threat = threat-like patterns; operational = service health (5xx/latency) that is anomalous but not malicious; health = data/source quality.",
+  "rules": [
+    {
+      "rule_id": "AUTH-001",
+      "domain": "AUTH",
+      "name": "Burst đăng nhập thất bại từ một nguồn",
+      "severity": "medium",
+      "conditions": [
+        {
+          "feature": "failures",
+          "op": ">=",
+          "value": 10
+        },
+        {
+          "feature": "attempts",
+          "op": ">=",
+          "value": 10
+        }
+      ],
+      "description": "Một nguồn có từ 10 lần đăng nhập thất bại trở lên trong một cửa sổ (min support 10 lần thử).",
+      "limitation": "Không phân biệt người dùng quên mật khẩu, script cấu hình sai hay đoán mật khẩu. Ngưỡng tuyệt đối phụ thuộc kích thước cửa sổ.",
+      "review_hint": "Kiểm tra số user bị thử, có lần thành công nào sau đó không, và nguồn có phải hệ thống nội bộ đã biết không.",
+      "attack_mapping": {
+        "technique": "T1110 Brute Force",
+        "attack_version": "ATT&CK Enterprise content v20.0 (checked on attack.mitre.org, 2026-10-28)",
+        "status": "hypothesis — hành vi phù hợp, không phải bằng chứng",
+        "source": "https://attack.mitre.org/techniques/T1110/"
+      },
+      "category": "threat"
+    },
+    {
+      "rule_id": "AUTH-002",
+      "domain": "AUTH",
+      "name": "Thất bại trên nhiều tài khoản từ một nguồn",
+      "severity": "medium",
+      "conditions": [
+        {
+          "feature": "distinct_failed_users",
+          "op": ">=",
+          "value": 5
+        },
+        {
+          "feature": "failures",
+          "op": ">=",
+          "value": 5
+        }
+      ],
+      "description": "Một nguồn thất bại trên từ 5 tài khoản khác nhau trong một cửa sổ.",
+      "limitation": "Hệ thống SSO/proxy dùng chung một IP có thể gây cảnh báo; không chứng minh password spraying.",
+      "review_hint": "Xác minh nguồn có phải NAT/proxy dùng chung; xem các tài khoản có tồn tại hay không.",
+      "attack_mapping": {
+        "technique": "T1110.003 Password Spraying",
+        "attack_version": "ATT&CK Enterprise content v20.0 (checked on attack.mitre.org, 2026-10-28)",
+        "status": "hypothesis — hành vi phù hợp, không phải bằng chứng",
+        "source": "https://attack.mitre.org/techniques/T1110/003/"
+      },
+      "category": "threat"
+    },
+    {
+      "rule_id": "AUTH-003",
+      "domain": "AUTH",
+      "name": "Thành công sau chuỗi thất bại (cần xem xét)",
+      "severity": "high",
+      "conditions": [
+        {
+          "feature": "success_after_3_failures",
+          "op": ">=",
+          "value": 1
+        },
+        {
+          "feature": "failures",
+          "op": ">=",
+          "value": 5
+        }
+      ],
+      "description": "Có lần đăng nhập thành công ngay sau ít nhất 3 lần thất bại của cùng user từ cùng nguồn, và tổng thất bại >= 5 trong cửa sổ.",
+      "limitation": "Người dùng gõ sai rồi nhập đúng cũng khớp mẫu này. Cần xem xét; không có nghĩa tài khoản đã bị chiếm.",
+      "review_hint": "Liên hệ chủ tài khoản hoặc kiểm tra hoạt động sau đăng nhập trước khi kết luận.",
+      "attack_mapping": {},
+      "category": "threat"
+    },
+    {
+      "rule_id": "HTTP-001",
+      "domain": "HTTP",
+      "name": "Burst lỗi 4xx từ một client",
+      "severity": "low",
+      "conditions": [
+        {
+          "feature": "count_4xx",
+          "op": ">=",
+          "value": 30
+        },
+        {
+          "feature": "ratio_4xx",
+          "op": ">=",
+          "value": 0.5
+        },
+        {
+          "feature": "requests",
+          "op": ">=",
+          "value": 30
+        }
+      ],
+      "description": "Client có >= 30 phản hồi 4xx và tỷ lệ 4xx >= 50% trong cửa sổ.",
+      "limitation": "Link hỏng, client cấu hình sai hoặc crawler hợp lệ có thể gây cảnh báo.",
+      "review_hint": "Xem các path chuẩn hóa bị gọi và tỷ lệ 404 so với 401/403.",
+      "attack_mapping": {},
+      "category": "threat"
+    },
+    {
+      "rule_id": "HTTP-002",
+      "domain": "HTTP",
+      "name": "Burst path không tồn tại (404) đa dạng",
+      "severity": "medium",
+      "conditions": [
+        {
+          "feature": "count_404",
+          "op": ">=",
+          "value": 20
+        },
+        {
+          "feature": "distinct_paths",
+          "op": ">=",
+          "value": 10
+        },
+        {
+          "feature": "ratio_404",
+          "op": ">=",
+          "value": 0.5
+        }
+      ],
+      "description": "Client gọi >= 10 path khác nhau với >= 20 lần 404 và tỷ lệ 404 >= 50%.",
+      "limitation": "Không phân biệt dò quét với ứng dụng frontend bị lỗi route; path đã được chuẩn hóa nên không thấy query.",
+      "review_hint": "Đối chiếu danh sách path với các route hợp lệ của ứng dụng.",
+      "attack_mapping": {
+        "technique": "T1595.003 Active Scanning: Wordlist Scanning",
+        "attack_version": "ATT&CK Enterprise content v20.0 (checked on attack.mitre.org, 2026-10-28)",
+        "status": "hypothesis — hành vi phù hợp, không phải bằng chứng",
+        "source": "https://attack.mitre.org/techniques/T1595/003/"
+      },
+      "category": "threat"
+    },
+    {
+      "rule_id": "HTTP-003",
+      "domain": "HTTP",
+      "name": "Tỷ lệ 5xx cao (sự cố vận hành hoặc bị tác động)",
+      "severity": "low",
+      "conditions": [
+        {
+          "feature": "ratio_5xx",
+          "op": ">=",
+          "value": 0.3
+        },
+        {
+          "feature": "requests",
+          "op": ">=",
+          "value": 10
+        }
+      ],
+      "description": "Tỷ lệ phản hồi 5xx >= 30% với ít nhất 10 request của client trong cửa sổ.",
+      "limitation": "Thường là sự cố vận hành của backend, không phải tấn công. Cảnh báo này giúp phân biệt bất thường với độc hại.",
+      "review_hint": "Kiểm tra nhiều client cùng bị 5xx (sự cố phía server) hay chỉ một client.",
+      "attack_mapping": {},
+      "category": "operational"
+    },
+    {
+      "rule_id": "HTTP-004",
+      "domain": "HTTP",
+      "name": "Độ trễ p95 tăng cao",
+      "severity": "low",
+      "conditions": [
+        {
+          "feature": "latency_p95_ms",
+          "op": ">=",
+          "value": 2000
+        },
+        {
+          "feature": "requests",
+          "op": ">=",
+          "value": 10
+        }
+      ],
+      "description": "p95 thời gian xử lý >= 2000 ms với ít nhất 10 request trong cửa sổ.",
+      "limitation": "NOT_EVALUABLE nếu nguồn không có trường duration. Thường là vấn đề hiệu năng.",
+      "review_hint": "So sánh với các client khác cùng thời điểm.",
+      "attack_mapping": {},
+      "category": "operational"
+    },
+    {
+      "rule_id": "HLTH-001",
+      "domain": "HEALTH",
+      "name": "Tỷ lệ dòng log không parse được cao",
+      "severity": "low",
+      "conditions": [
+        {
+          "feature": "parse_failure_ratio",
+          "op": ">=",
+          "value": 0.05
+        },
+        {
+          "feature": "records_total",
+          "op": ">=",
+          "value": 20
+        }
+      ],
+      "description": ">= 5% bản ghi của một lần nhập bị từ chối (>= 20 bản ghi).",
+      "limitation": "Cảnh báo chất lượng dữ liệu; không liên quan trực tiếp tới mối đe dọa.",
+      "review_hint": "Xem lý do từ chối trong trang Nguồn để sửa cấu hình (timezone, schema).",
+      "attack_mapping": {},
+      "category": "health"
+    },
+    {
+      "rule_id": "HLTH-002",
+      "domain": "HEALTH",
+      "name": "Nguồn ngừng cập nhật (stale)",
+      "severity": "low",
+      "conditions": [
+        {
+          "feature": "stale_ratio",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "description": "Nguồn đang follow không có dữ liệu mới lâu hơn stale_after_seconds của nguồn (stale_ratio = thời gian im lặng / stale_after_seconds).",
+      "limitation": "Không có log không đồng nghĩa không có mối đe dọa.",
+      "review_hint": "Kiểm tra dịch vụ ghi log và quyền đọc file.",
+      "attack_mapping": {},
+      "category": "health"
+    },
+    {
+      "rule_id": "HLTH-003",
+      "domain": "HEALTH",
+      "name": "Khoảng trống thời gian trong dữ liệu",
+      "severity": "low",
+      "conditions": [
+        {
+          "feature": "gap_over_expected_ratio",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "description": "Khoảng cách lớn nhất giữa hai sự kiện liên tiếp vượt expected_max_gap_seconds mà nguồn khai báo.",
+      "limitation": "Chỉ đánh giá khi nguồn khai báo expected_max_gap_seconds (nếu không: NOT_EVALUABLE). Có thể là thời gian ít hoạt động hợp lệ.",
+      "review_hint": "Đối chiếu với lịch hoạt động của hệ thống nguồn.",
+      "attack_mapping": {},
+      "category": "health"
+    }
+  ]
+}

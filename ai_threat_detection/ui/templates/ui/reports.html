@@ -1,0 +1,21 @@
+{% extends "ui/base.html" %}
+{% block title %}Báo cáo{% endblock %}
+{% block content %}
+<h1>Báo cáo</h1>
+<p class="note">Báo cáo private lưu trong .local/reports. "Public draft" thay entity/nguồn bằng alias, bỏ event mẫu và lưu ở .local/public_drafts — vẫn cần người review và <code>manage.py publish_check --include-drafts</code> trước khi chia sẻ.</p>
+{% if atd_is_analyst %}
+<form method="post" class="filters panel">{% csrf_token %}
+  <label>Loại <select name="kind"><option value="alerts">Alerts</option><option value="experiment">Thí nghiệm</option></select></label>
+  <label>Thí nghiệm <select name="experiment"><option value="">—</option>{% for e in experiments %}<option>{{ e }}</option>{% endfor %}</select></label>
+  <label>Namespace <input type="text" name="namespace" value="live" size="18"></label>
+  <label>Số ngày <input type="number" name="days" value="30" min="1" max="365"></label>
+  <label><span>Public draft</span><input type="checkbox" name="public_draft" value="on"></label>
+  <button type="submit">Xuất báo cáo</button>
+</form>
+{% endif %}
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Loại</th><th>Public draft</th><th>Tham số</th><th>Tạo lúc</th><th>File</th></tr></thead><tbody>
+{% for r in reports %}<tr><td class="mono small">{{ r.report_id }}</td><td>{{ r.kind }}</td><td>{{ r.public_draft|yesno:"có,không" }}</td><td class="mono small">{{ r.params }}</td><td class="small">{{ r.created_at|date:"Y-m-d H:i" }}</td>
+<td>{% if atd_is_analyst or r.public_draft %}{% for fmt in r.files %}<a href="{% url 'report_file' r.report_id fmt %}">{{ fmt }}</a> (<a href="{% url 'report_file' r.report_id fmt %}?download=1">tải</a>) {% endfor %}{% else %}<span class="muted small">cần quyền analyst</span>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="6" class="muted">Chưa có báo cáo.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

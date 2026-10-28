@@ -1,0 +1,22 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Nguồn{% endblock %}
+{% block content %}
+<h1>Nguồn log</h1>
+<p class="note">Chỉ đọc file trong thư mục đã đăng ký và nằm trong ATD_ALLOWED_SOURCE_ROOTS ({{ allowed_roots_count }} root được cấu hình). Không có API đọc filesystem/URL tùy ý.</p>
+{% if sources %}
+<div class="tablewrap"><table><thead><tr><th>Tên</th><th>Loại</th><th>Provenance</th><th>Privacy</th><th>Timezone giả định</th><th class="num">Sự kiện</th><th>Tình trạng</th><th>Cấu hình</th></tr></thead><tbody>
+{% for s in sources %}<tr><td><a href="{% url 'source_detail' s.name %}">{{ s.name }}</a></td><td>{{ s.get_source_type_display }}</td><td>{{ s.provenance }}</td><td>{{ s.privacy_class }}</td>
+<td>{{ s.assume_timezone|default:"— (naive timestamp bị từ chối)" }}</td><td class="num">{{ s.n_events|num }}</td>
+<td>{% include "ui/_status.html" with s=s.health.status|default:"NEVER_RUN" %}</td><td class="small">v{{ s.config_version }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p class="muted">Chưa có nguồn.</p>{% endif %}
+
+{% if atd_is_admin %}
+<h2>Đăng ký nguồn (admin)</h2>
+<form method="post" class="stack panel">{% csrf_token %}
+  {% for field in form %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}{% endfor %}
+  <p><button type="submit">Đăng ký</button></p>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "ui/base.html" %}
+{% block title %}Thông báo{% endblock %}
+{% block content %}
+<h1>Thông báo trong ứng dụng</h1>
+<p class="note">Chỉ thông báo trong app cho alert severity ≥ medium không bị suppress. Không gửi email/webhook/Slack.</p>
+{% if atd_is_analyst %}<form method="post">{% csrf_token %}<button type="submit" class="secondary">Đánh dấu đã đọc tất cả</button></form>{% endif %}
+<ul>{% for n in items %}<li class="{% if not n.read_at %}strong{% endif %}"><span class="badge sev-{{ n.level }}">{{ n.level }}</span> {{ n.created_at|date:"Y-m-d H:i" }} — {% if n.alert %}<a href="{% url 'alert_detail' n.alert_id %}">{{ n.message }}</a>{% else %}{{ n.message }}{% endif %}{% if not n.read_at %} <span class="tag">mới</span>{% endif %}</li>{% empty %}<li class="muted">Không có.</li>{% endfor %}</ul>
+{% endblock %}

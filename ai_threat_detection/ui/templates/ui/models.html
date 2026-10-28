@@ -1,0 +1,24 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Mô hình{% endblock %}
+{% block content %}
+<h1>Model registry</h1>
+<div class="grid">
+{% for dom, st in ml.items %}<section class="panel"><h2>{{ dom }}</h2>{% include "ui/_status.html" with s=st.status %}
+{% if st.model %}<p><a class="mono" href="{% url 'model_detail' st.model.model_id %}">{{ st.model.model_id }}</a> · ngưỡng {{ st.model.threshold|num }}</p>{% endif %}
+<p class="small muted">{{ st.reason|default:"" }}{% if st.status != "ACTIVE" and st.status != "STALE" %} Domain chạy rules-only; không có ML score được tạo.{% endif %}</p></section>{% endfor %}
+<section class="panel"><h2>EVE flow / alert</h2>{% include "ui/_status.html" with s="UPSTREAM_ONLY" %}<p class="small muted">Suricata alert là tín hiệu upstream IDS; không có feature/model flow trong v1.</p></section>
+</div>
+<p class="note">Model mới train luôn là CANDIDATE; chỉ admin kích hoạt sau khi có validation, qua kiểm tra integrity/compatibility. Không có upload model hay nạp file theo đường dẫn.</p>
+<h2>Các phiên bản</h2>
+<div class="tablewrap"><table><thead><tr><th>Model</th><th>Domain</th><th>Trạng thái</th><th>Feature set</th><th>Experiment</th><th class="num">n_train</th><th class="num">Ngưỡng</th><th>Tạo lúc</th></tr></thead><tbody>
+{% for m in models %}<tr><td><a class="mono" href="{% url 'model_detail' m.model_id %}">{{ m.model_id }}</a></td><td>{{ m.domain }}</td><td>{% include "ui/_status.html" with s=m.status %}</td><td>{{ m.feature_set }}</td>
+<td>{% if m.experiment %}<a href="{% url 'experiment_detail' m.experiment.exp_id %}">{{ m.experiment.exp_id }}</a>{% endif %}</td><td class="num">{{ m.n_train }}</td><td class="num">{{ m.threshold|num }} (v{{ m.threshold_version }})</td><td class="small">{{ m.created_at|date:"Y-m-d H:i" }}</td></tr>
+{% empty %}<tr><td colspan="8" class="muted">Chưa có model (UNTRAINED).</td></tr>{% endfor %}
+</tbody></table></div>
+<h2>Lịch sử kích hoạt</h2>
+<div class="tablewrap"><table><thead><tr><th>Lúc</th><th>Domain</th><th>Thao tác</th><th>Model</th><th>Trước đó</th><th>Người</th><th>Lý do</th></tr></thead><tbody>
+{% for h in history %}<tr><td class="small">{{ h.created_at|date:"Y-m-d H:i:s" }}</td><td>{{ h.domain }}</td><td>{{ h.action }}</td><td class="mono small">{{ h.model.model_id|default:"—" }}</td><td class="mono small">{{ h.previous.model_id|default:"—" }}</td><td>{{ h.actor_label }}</td><td class="small">{{ h.reason }}</td></tr>
+{% empty %}<tr><td colspan="7" class="muted">Chưa có.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

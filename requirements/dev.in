@@ -1,0 +1,9 @@
+# Development / test tooling (pinned in requirements/dev.lock)
+-c base.lock
+pytest
+pytest-django
+ruff
+mypy
+bandit
+playwright
+pip-tools

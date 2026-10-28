@@ -1,0 +1,67 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Thí nghiệm {{ exp.exp_id }}{% endblock %}
+{% block content %}
+<h1>Thí nghiệm {{ exp.exp_id }} <span class="badge st-neutral">{{ exp.dataset.provenance }}</span></h1>
+<div class="grid">
+<section class="panel"><h2>Thiết lập</h2>
+<dl class="kv">
+  <dt>Dataset</dt><dd><a href="{% url 'dataset_detail' exp.dataset.dataset_id %}">{{ exp.dataset.dataset_id }}</a> ({{ exp.dataset.privacy_class }})</dd>
+  <dt>Protocol</dt><dd>{{ exp.protocol_version }}</dd>
+  <dt>Window</dt><dd>{{ exp.window_config.kind }} {{ exp.window_config.size_s }} s, lateness {{ exp.window_config.allowed_lateness_s }} s, min_events {{ exp.window_config.min_events }}</dd>
+  <dt>Feature sets</dt><dd>{{ exp.feature_sets }}</dd>
+  <dt>Split manifest</dt><dd class="mono small">{{ exp.split_manifest_sha256|slice:":24" }}…</dd>
+  <dt>Phương pháp split</dt><dd class="small">{{ manifest.split_method }}; purge gap {{ manifest.purge_gap_seconds }} s</dd>
+  <dt>Pseudonym key id</dt><dd class="mono">{{ manifest.pseudonym_key_id }}</dd>
+</dl></section>
+<section class="panel"><h2>Split</h2>
+<table><thead><tr><th>Split</th><th>Khoảng thời gian</th><th>AUTH (nhãn: số cửa sổ)</th><th>HTTP</th></tr></thead><tbody>
+{% for s, r in manifest.split_time_ranges.items %}<tr><td>{{ s }}</td><td class="small">{{ r.start|slice:":16" }} → {{ r.end|slice:":16" }}</td>
+<td class="small">{% with c=manifest.counts|get:s %}{% for k, v in c.AUTH.items %}{{ k }}: {{ v }}<br>{% endfor %}{% endwith %}</td>
+<td class="small">{% with c=manifest.counts|get:s %}{% for k, v in c.HTTP.items %}{{ k }}: {{ v }}<br>{% endfor %}{% endwith %}</td></tr>{% endfor %}
+</tbody></table>
+<details><summary>Assignment và kiểm tra leakage</summary><pre>{{ manifest.assignment|pretty }}
+{{ manifest.diagnostics|pretty }}</pre></details>
+</section>
+</div>
+
+<h2>So sánh F1 (T1_SUSPICIOUS) theo lần đánh giá</h2>
+{{ chart|json_script:"chart-data" }}
+<div class="chart panel" data-chart="bars" data-source="chart-data" data-label="F1 rules_only / ml_only / hybrid_or" data-axis="F1 trên cửa sổ entity (0–1); validation dùng để chọn ngưỡng nên lạc quan; N/A = không xác định">Đang tải biểu đồ…</div>
+
+<h2>Models</h2>
+{% for m in models %}
+<section class="panel">
+<h3><a class="mono" href="{% url 'model_detail' m.model_id %}">{{ m.model_id }}</a> · {{ m.domain }} {% include "ui/_status.html" with s=m.status %}</h3>
+<p class="small">Ngưỡng {{ m.threshold|num:4 }} · {{ m.threshold_criterion.criterion }} · n_train {{ m.n_train }}</p>
+{% if atd_is_admin %}
+<form method="post" action="{% url 'experiment_action' exp.exp_id %}" class="filters" data-confirm="Chạy đánh giá trên test? Lần chạy thứ hai trở đi cần lý do và bị đánh dấu test_previously_seen.">{% csrf_token %}
+  <input type="hidden" name="action" value="evaluate"><input type="hidden" name="domain" value="{{ m.domain }}"><input type="hidden" name="model_id" value="{{ m.model_id }}">
+  <label>Lý do chạy lại (nếu đã chạy test) <input type="text" name="rerun_reason" size="40"></label>
+  <button type="submit" class="secondary">Đánh giá test</button>
+</form>
+{% endif %}
+</section>
+{% empty %}<p class="muted">Chưa train.</p>{% endfor %}
+{% if atd_is_admin %}
+<form method="post" action="{% url 'experiment_action' exp.exp_id %}" class="filters panel">{% csrf_token %}
+  <input type="hidden" name="action" value="train">
+  <label>Domain <select name="domain"><option>AUTH</option><option>HTTP</option></select></label>
+  <label title="Dùng cả cửa sổ nhãn UNKNOWN (log chưa gán nhãn) làm baseline; rủi ro nhiễm được ghi vào model card"><input type="checkbox" name="train_on_unknown" value="1"> Train cả cửa sổ UNKNOWN</label>
+  <button type="submit">Train candidate</button>
+</form>
+{% endif %}
+
+<h2>Các lần đánh giá</h2>
+{% for ev in evals %}
+<section class="panel">
+<h3>{{ ev.domain }} · {{ ev.split }} · lần {{ ev.run_index }} · <span class="mono small">{{ ev.model.model_id }}</span>{% if ev.test_previously_seen %} <span class="badge st-bad">test đã xem trước — không còn unseen</span>{% endif %}</h3>
+{% if ev.rerun_reason %}<p class="small">Lý do chạy lại: {{ ev.rerun_reason }}</p>{% endif %}
+<p class="note">{{ ev.metrics.caveat }}</p>
+<h3>T1_SUSPICIOUS</h3>{% include "ui/_metrics.html" with task=ev.metrics.tasks.T1_SUSPICIOUS %}
+<h3>T2_ANOMALOUS</h3>{% include "ui/_metrics.html" with task=ev.metrics.tasks.T2_ANOMALOUS %}
+<details><summary>Theo kịch bản (hybrid_or, T1) và timing</summary><pre>{{ ev.metrics.tasks.T1_SUSPICIOUS.methods.hybrid_or.per_scenario|pretty }}
+{{ ev.metrics.timing|pretty }}</pre></details>
+</section>
+{% empty %}<p class="muted">Chưa có.</p>{% endfor %}
+{% endblock %}

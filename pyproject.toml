@@ -1,0 +1,52 @@
+[project]
+name = "ai-threat-detection"
+version = "0.1.0"
+description = "Local log anomaly and rule-based threat detection console with reproducible evaluation."
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "Proprietary - see README (license not yet chosen)" }
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+testpaths = ["tests"]
+addopts = "-q -p no:cacheprovider -m \"not lab and not browser\""
+markers = [
+    "lab: runs the project-managed fixture service on loopback (real HTTP traffic, slow)",
+    "browser: runs a real browser via Playwright (needs a local Chromium/Edge)",
+    "slow: long-running end-to-end",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = [".venv", ".local", "**/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "DJ"]
+# DJ001: null=True on some CharFields is deliberate (missing identity != empty string).
+# DJ008: __str__ on internal models adds nothing (no Django admin).
+ignore = ["S101", "S311", "S603", "S607", "B904", "E501", "DJ001", "DJ008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106", "S108", "S113", "S310", "S112", "B017"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+follow_imports = "silent"
+check_untyped_defs = false
+files = [
+    "ai_threat_detection/normalization",
+    "ai_threat_detection/features/spec.py",
+    "ai_threat_detection/features/compute.py",
+    "ai_threat_detection/rules/engine.py",
+    "ai_threat_detection/ml",
+    "ai_threat_detection/experiments/metrics.py",
+    "ai_threat_detection/experiments/builder.py",
+    "ai_threat_detection/sources/reader.py",
+    "ai_threat_detection/sources/adapters",
+    "ai_threat_detection/publishing",
+]
+
+[tool.bandit]
+exclude_dirs = [".venv", ".local", "tests"]

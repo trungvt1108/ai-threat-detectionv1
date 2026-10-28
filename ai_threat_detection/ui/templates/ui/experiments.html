@@ -1,0 +1,11 @@
+{% extends "ui/base.html" %}
+{% block title %}Thí nghiệm{% endblock %}
+{% block content %}
+<h1>Thí nghiệm</h1>
+<p class="note">Protocol: docs/EVALUATION_PROTOCOL.md. Split theo thời gian và nhóm capture trước mọi bước fit; ngưỡng chọn trên validation; test chỉ để báo cáo.</p>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Dataset</th><th>Provenance</th><th>Protocol</th><th>Cửa sổ</th><th>Trạng thái</th><th>Tạo lúc</th></tr></thead><tbody>
+{% for e in experiments %}<tr><td><a href="{% url 'experiment_detail' e.exp_id %}">{{ e.exp_id }}</a></td><td>{{ e.dataset.dataset_id }}</td><td><span class="badge st-neutral">{{ e.dataset.provenance }}</span></td>
+<td class="small">{{ e.protocol_version }}</td><td>{{ e.window_config.size_s }} s</td><td>{{ e.status }}</td><td class="small">{{ e.created_at|date:"Y-m-d H:i" }}</td></tr>
+{% empty %}<tr><td colspan="7" class="muted">Chưa có. Tạo từ trang Dataset.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

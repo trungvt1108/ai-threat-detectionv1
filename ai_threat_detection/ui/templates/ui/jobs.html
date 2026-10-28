@@ -1,0 +1,16 @@
+{% extends "ui/base.html" %}
+{% block title %}Jobs{% endblock %}
+{% block content %}
+<h1>Jobs</h1>
+<p class="note">Job do UI tạo được thực thi bởi <code>python manage.py runworker</code>. Một training job tại một thời điểm; mỗi nguồn chỉ một job ingest.</p>
+<form method="get" class="filters"><label>Trạng thái <select name="status"><option value="">(tất cả)</option>{% for s in statuses %}<option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label><button type="submit" class="secondary">Lọc</button></form>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Loại</th><th>Tham số</th><th>Trạng thái</th><th>Người tạo</th><th>Tạo lúc</th><th>Kết thúc</th><th>Tiến độ / lỗi</th><th></th></tr></thead><tbody>
+{% for j in page %}<tr><td>{{ j.pk }}</td><td>{{ j.kind }}</td><td class="mono small">{{ j.params }}</td>
+<td data-job-id="{{ j.pk }}" data-active="{% if j.is_active %}1{% else %}0{% endif %}">{{ j.status }}</td>
+<td class="small">{{ j.created_by_label }}</td><td class="small">{{ j.created_at|date:"Y-m-d H:i:s" }}</td><td class="small">{{ j.finished_at|date:"H:i:s"|default:"—" }}</td>
+<td class="small">{% if j.error %}<span class="errorlist">{{ j.error }}</span>{% else %}{{ j.progress }}{% endif %}</td>
+<td>{% if j.is_active and atd_is_analyst %}<form method="post" action="{% url 'job_cancel' j.pk %}" data-confirm="Dừng job #{{ j.pk }}?">{% csrf_token %}<button type="submit" class="danger">Dừng</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="9" class="muted">Không có job.</td></tr>{% endfor %}
+</tbody></table></div>
+<div class="pager">{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&status={{ status }}">← Trước</a>{% endif %} Trang {{ page.number }}/{{ page.paginator.num_pages }} {% if page.has_next %}<a href="?page={{ page.next_page_number }}&status={{ status }}">Sau →</a>{% endif %}</div>
+{% endblock %}

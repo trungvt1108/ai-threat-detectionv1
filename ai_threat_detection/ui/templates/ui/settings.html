@@ -1,0 +1,34 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Cài đặt{% endblock %}
+{% block content %}
+<h1>Cài đặt</h1>
+<h2>Rules (phiên bản hiện tại)</h2>
+<div class="tablewrap"><table><thead><tr><th>Rule</th><th>v</th><th>Domain</th><th>Loại</th><th>Tên</th><th>Điều kiện</th><th>Severity</th><th>Bật</th><th>Thay đổi bởi</th><th></th></tr></thead><tbody>
+{% for r in rules %}<tr><td class="mono">{{ r.rule_id }}</td><td>{{ r.version }}</td><td>{{ r.domain }}</td><td>{{ r.definition.category|default:"threat" }}</td><td>{{ r.definition.name }}</td>
+<td class="mono small">{% for c in r.definition.conditions %}{{ c.feature }} {{ c.op }} {{ c.value }}{% if not forloop.last %} AND {% endif %}{% endfor %}</td>
+<td><span class="badge sev-{{ r.definition.severity }}">{{ r.definition.severity }}</span></td><td>{{ r.enabled|yesno:"có,TẮT" }}</td><td class="small">{{ r.actor_label }} · {{ r.reason|short:40 }}</td>
+<td>{% if atd_is_admin %}<a href="{% url 'rule_edit' r.rule_id %}">Sửa</a>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="note">Sửa rule tạo version mới kèm người/lý do/audit; không sửa tại chỗ. Ngưỡng không được chỉnh theo nhãn test.</p>
+
+<h2>Suppressions</h2>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Domain</th><th>Entity</th><th>Rule</th><th>Lý do</th><th>Hết hạn</th><th>Người tạo</th><th>Trạng thái</th><th></th></tr></thead><tbody>
+{% for s in suppressions %}<tr><td>{{ s.pk }}</td><td>{{ s.domain }}</td><td class="mono small">{{ s.entity_key|default:"*" }}</td><td>{{ s.rule_id|default:"*" }}</td><td class="small">{{ s.reason }}</td>
+<td class="small">{{ s.expires_at|date:"Y-m-d H:i" }}</td><td>{{ s.actor.username|default:"—" }}</td>
+<td>{% if s.revoked_at %}thu hồi{% elif s.expires_at < now %}hết hạn{% else %}<span class="badge st-warn">hiệu lực</span>{% endif %}</td>
+<td>{% if not s.revoked_at and s.expires_at > now and atd_is_analyst %}<form method="post" action="{% url 'suppression_revoke' s.pk %}">{% csrf_token %}<button type="submit" class="link">Thu hồi</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="9" class="muted">Không có.</td></tr>{% endfor %}
+</tbody></table></div>
+
+<h2>Cấu hình runtime (đọc từ ATD_*)</h2>
+<dl class="kv panel">
+  <dt>CPU threads tối đa</dt><dd>{{ cfg.max_cpu_threads }}</dd><dt>Độ dài dòng tối đa</dt><dd>{{ cfg.max_line_bytes }} bytes</dd>
+  <dt>Kích thước file tối đa</dt><dd>{{ cfg.max_file_bytes }} bytes</dd><dt>Sự kiện tối đa / job</dt><dd>{{ cfg.max_events_per_job }}</dd>
+  <dt>Retention</dt><dd>{{ cfg.retention_days }} ngày (<code>manage.py cleanup_data</code>, dry-run mặc định)</dd>
+  <dt>Tuổi model tối đa</dt><dd>{{ cfg.model_max_age_days }} ngày (sau đó STALE)</dd>
+  <dt>Hiển thị raw identity</dt><dd>{{ cfg.allow_raw_identity_view|yesno:"bật (chỉ admin),tắt" }}</dd>
+  <dt>Source roots được phép</dt><dd>{{ cfg.allowed_source_roots|length }}</dd>
+</dl>
+{% if users %}<h2>Người dùng</h2><ul>{% for u, r in users %}<li>{{ u }} — {{ r|default:"không có vai trò" }}</li>{% endfor %}</ul><p class="small muted">Tạo/đổi vai trò qua <code>manage.py create_user</code>.</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Dataset {{ ds.dataset_id }}{% endblock %}
+{% block content %}
+<h1>Dataset {{ ds.dataset_id }} <span class="badge st-neutral">{{ ds.provenance }}</span></h1>
+<dl class="kv panel">
+  <dt>Tên</dt><dd>{{ ds.name }}</dd><dt>Privacy</dt><dd>{{ ds.privacy_class }}</dd><dt>License</dt><dd>{{ ds.license }}</dd>
+  <dt>Ràng buộc sử dụng</dt><dd>{{ ds.usage_constraints }}</dd><dt>Mô tả</dt><dd>{{ ds.description }}</dd>
+  <dt>Generator</dt><dd class="mono small">{{ ds.generator|pretty }}</dd>
+  <dt>Định nghĩa nhãn</dt><dd class="mono small">{{ ds.label_definition|pretty }}</dd>
+  <dt>Pseudonym key id</dt><dd class="mono">{{ ds.pseudonym_key_id|default:"—" }}</dd>
+</dl>
+<h2>Captures</h2>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Nhóm</th><th>Bắt đầu (UTC)</th><th>Kết thúc</th><th>Mô tả</th><th>Nhãn nền</th><th>Import</th><th>Cảnh báo</th></tr></thead><tbody>
+{% for c in captures %}<tr><td>{{ c.capture_id }}</td><td>{{ c.scenario_group }}</td><td class="small">{{ c.start|date:"Y-m-d H:i:s" }}</td><td class="small">{{ c.end|date:"Y-m-d H:i:s" }}</td>
+<td class="small">{{ c.description }}</td><td>{{ c.background_label }}</td>
+<td class="small">{% for dom, st in c.import_stats.items %}{{ dom }}: {{ st.accepted }} nhận / {{ st.rejected }} từ chối{% if st.skipped %} / {{ st.skipped }} bỏ qua{% endif %}{% if st.health_alerts %} · <strong>{{ st.health_alerts|join:", " }}</strong>{% endif %}<br>{% empty %}—{% endfor %}</td>
+<td class="small"><a href="{% url 'alerts' %}?namespace={{ c.namespace|urlencode }}">xem</a></td></tr>{% endfor %}
+</tbody></table></div>
+{% if atd_is_admin and ds.status == "IMPORTED" %}
+<form method="post" action="{% url 'datasets' %}" class="filters panel">{% csrf_token %}
+  <input type="hidden" name="action" value="detect"><input type="hidden" name="dataset_id" value="{{ ds.dataset_id }}">
+  <button type="submit" class="secondary">Chạy phát hiện trên mọi capture</button>
+  <span class="small muted">Rules + model đang ACTIVE (cửa sổ của model; không có model thì rules-only). Alert nằm ở namespace ds:{{ ds.dataset_id }}/…, tách khỏi live.</span>
+</form>
+{% endif %}
+<h2>Thí nghiệm</h2>
+{% for e in experiments %}<p><a href="{% url 'experiment_detail' e.exp_id %}">{{ e.exp_id }}</a> · {{ e.status }} · cửa sổ {{ e.window_config.size_s }} s</p>{% empty %}<p class="muted">Chưa có.</p>{% endfor %}
+{% if atd_is_admin and ds.status == "IMPORTED" %}
+<form method="post" action="{% url 'experiment_action' ds.dataset_id %}" class="filters panel">{% csrf_token %}
+  <input type="hidden" name="action" value="create">
+  {% for f in exp_form %}<label>{{ f.label }} {{ f }}</label>{% endfor %}
+  <button type="submit">Tạo thí nghiệm (split trước mọi fit)</button>
+</form>
+{% endif %}
+{% endblock %}

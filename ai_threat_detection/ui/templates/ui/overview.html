@@ -1,0 +1,58 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Tổng quan{% endblock %}
+{% block content %}
+<h1>Tổng quan</h1>
+<div class="grid">
+  <section class="panel">
+    <h2>Alert (namespace live)</h2>
+    <dl class="kv">
+      <dt>Tạo trong 24 giờ</dt><dd>{{ alerts_24h }}</dd>
+      <dt>Chưa đóng</dt><dd>{{ alerts_open }}</dd>
+      {% for r in by_severity %}<dt>Mở · {{ r.severity }}</dt><dd>{{ r.n }}</dd>{% endfor %}
+      {% for r in by_source %}<dt>24h · {{ r.detection_source }}</dt><dd>{{ r.n }}</dd>{% endfor %}
+    </dl>
+    <p class="note">Alert đã được nhóm theo entity + cooldown; số alert không phải số vụ tấn công.</p>
+  </section>
+  <section class="panel">
+    <h2>Phát hiện đang dùng</h2>
+    <dl class="kv">
+      <dt>Rules bật</dt><dd>{{ rule_count }} (<a href="{% url 'settings' %}">xem</a>)</dd>
+      {% for dom, st in ml.items %}
+      <dt>ML {{ dom }}</dt><dd>{% include "ui/_status.html" with s=st.status %} {% if st.model %}<a href="{% url 'model_detail' st.model.model_id %}" class="mono">{{ st.model.model_id }}</a>{% endif %}
+        {% if st.status != "ACTIVE" %}<div class="small muted">{{ st.reason }} — domain chạy rules-only, không có ML score.</div>{% endif %}</dd>
+      {% endfor %}
+      <dt>EVE flow</dt><dd>{% include "ui/_status.html" with s="UPSTREAM_ONLY" %} <span class="small muted">không có model flow trong v1</span></dd>
+      <dt>Jobs đang chạy/chờ</dt><dd><a href="{% url 'jobs' %}">{{ active_jobs }}</a></dd>
+    </dl>
+  </section>
+  <section class="panel">
+    <h2>Nguồn log</h2>
+    {% if sources %}
+    <table><thead><tr><th>Nguồn</th><th>Loại</th><th>Tình trạng</th><th>Dữ liệu cuối</th></tr></thead><tbody>
+    {% for s in sources %}<tr><td><a href="{% url 'source_detail' s.name %}">{{ s.name }}</a></td><td>{{ s.source_type }}</td>
+      <td>{% include "ui/_status.html" with s=s.health.status|default:"NEVER_RUN" %}</td><td class="small">{{ s.health.last_data_at|date:"Y-m-d H:i"|default:"—" }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="muted">Chưa đăng ký nguồn nào. Xem <a href="{% url 'sources' %}">Nguồn</a> hoặc chạy demo trong QUICKSTART.</p>{% endif %}
+    <p class="note">Nguồn lỗi hoặc im lặng không có nghĩa là không có mối đe dọa.</p>
+  </section>
+</div>
+
+<h2>Alert gần nhất (mọi namespace)</h2>
+{% if recent_alerts %}
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Namespace</th><th>Domain</th><th>Cửa sổ (UTC)</th><th>Nguồn phát hiện</th><th>Severity</th><th>Tiêu đề</th><th>Trạng thái</th></tr></thead><tbody>
+{% for a in recent_alerts %}<tr><td><a href="{% url 'alert_detail' a.pk %}">{{ a.pk }}</a></td><td class="small">{{ a.namespace }}</td><td>{{ a.domain }}</td>
+<td class="small">{{ a.window_start|date:"Y-m-d H:i:s" }}</td><td>{{ a.detection_source }}</td><td><span class="badge sev-{{ a.severity }}">{{ a.severity }}</span></td>
+<td>{{ a.title }}</td><td class="small">{{ a.workflow_status }} / {{ a.assessment }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p class="muted">Chưa có alert. Điều đó không chứng minh không có mối đe dọa — kiểm tra tình trạng nguồn và ML.</p>{% endif %}
+
+<h2>Lần nhập gần nhất</h2>
+{% if recent_runs %}
+<div class="tablewrap"><table><thead><tr><th>Nguồn</th><th>Chế độ</th><th>Namespace</th><th>Trạng thái</th><th class="num">Nhận</th><th class="num">Trùng</th><th class="num">Từ chối</th><th class="num">Late</th><th>Bắt đầu</th></tr></thead><tbody>
+{% for r in recent_runs %}<tr><td>{{ r.source.name }}</td><td>{{ r.mode }}</td><td class="small">{{ r.namespace }}</td><td>{% include "ui/_status.html" with s=r.status %}</td>
+<td class="num">{{ r.accepted|num }}</td><td class="num">{{ r.duplicates|num }}</td><td class="num">{{ r.rejected|num }}</td><td class="num">{{ r.late_events|num }}</td><td class="small">{{ r.started_at|date:"Y-m-d H:i" }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p class="muted">Chưa có lần nhập.</p>{% endif %}
+{% if namespaces %}<p class="small muted">Namespace có alert: {% for n in namespaces %}<span class="tag">{{ n.namespace }} ({{ n.n }})</span>{% endfor %} — replay/thí nghiệm tách khỏi live.</p>{% endif %}
+{% endblock %}

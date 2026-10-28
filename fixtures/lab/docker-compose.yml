@@ -1,0 +1,25 @@
+# Optional: run the fixture in an isolated container. Published on loopback only.
+# Usage (from repo root):  docker compose -f fixtures/lab/docker-compose.yml -p atd-fixture up --build -d
+# Cleanup (this project only): docker compose -f fixtures/lab/docker-compose.yml -p atd-fixture down --rmi local
+services:
+  fixture:
+    build:
+      context: ../..
+      dockerfile: fixtures/lab/Dockerfile
+    labels:
+      com.atd.project: ai-threat-detection
+      com.atd.role: lab-fixture
+    ports:
+      - "127.0.0.1:${ATD_FIXTURE_PORT:-18815}:8080"
+    volumes:
+      - ../../.local/lab/docker-logs:/logs
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    cpus: 0.5
+    networks: [fixture-net]
+networks:
+  fixture-net:
+    labels:
+      com.atd.project: ai-threat-detection

@@ -1,0 +1,95 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Alert {{ alert.pk }}{% endblock %}
+{% block content %}
+<h1>Alert #{{ alert.pk }} · <span class="badge sev-{{ alert.severity }}">{{ alert.severity }}</span> {{ alert.title }}</h1>
+<div class="grid">
+<section class="panel"><h2>Tóm tắt</h2>
+<dl class="kv">
+  <dt>Namespace</dt><dd>{{ alert.namespace }}</dd><dt>Domain</dt><dd>{{ alert.domain }}</dd>
+  <dt>Entity</dt><dd class="mono">{{ alert.entity_key|default:"—" }} <span class="small muted">(pseudonym, không phải ẩn danh tuyệt đối)</span></dd>
+  <dt>Khoảng thời gian</dt><dd>{{ alert.window_start|date:"Y-m-d H:i:s" }} → {{ alert.window_end|date:"Y-m-d H:i:s" }} UTC</dd>
+  <dt>Nguồn phát hiện</dt><dd>{{ alert.get_detection_source_display }}{% if alert.detection_source == "UPSTREAM_IDS" %} <span class="small muted">— tín hiệu Suricata, không phải phát hiện của model dự án</span>{% endif %}</dd>
+  <dt>Rules</dt><dd>{% for r in alert.rule_ids %}<span class="tag">{{ r }} v{{ alert.rule_versions|get:r }}</span>{% empty %}—{% endfor %}</dd>
+  <dt>ML</dt><dd>{% if alert.max_ml_score is not None %}score lớn nhất {{ alert.max_ml_score|num }} (ngưỡng {{ alert.ml_threshold|num }}), bách phân vị {{ alert.max_ml_percentile|num:0 }} so với điểm train · {% for m in alert.model_ids %}<a class="mono small" href="{% url 'model_detail' m %}">{{ m }}</a>{% endfor %}{% else %}không có ML anomaly trong alert này{% endif %}</dd>
+  <dt>Provenance dữ liệu</dt><dd>{{ alert.provenance|default:"—" }}</dd>
+  <dt>Số quyết định gộp</dt><dd>{{ alert.decision_count }} (cooldown/grouping — evidence mới vẫn được giữ bên dưới)</dd>
+  <dt>Quality flags</dt><dd>{% for q in alert.quality_flags %}<span class="tag">{{ q }}</span>{% empty %}—{% endfor %}</dd>
+  <dt>Suppressed</dt><dd>{% if alert.suppressed %}có — {{ alert.suppression.reason }} (hết hạn {{ alert.suppression.expires_at|date:"Y-m-d H:i" }}){% else %}không{% endif %}</dd>
+  <dt>Workflow</dt><dd>{{ alert.get_workflow_status_display }} · {{ alert.get_assessment_display }}</dd>
+</dl>
+<p class="note">Bất thường thống kê không chứng minh có tấn công. Không có hành động phản ứng tự động; chỉ gợi ý kiểm tra bằng lời.</p>
+</section>
+<section class="panel"><h2>Tóm tắt bằng chứng</h2><pre>{{ alert.summary }}</pre>
+{% if latest %}
+  {% for r in latest.rule_results %}<h3>{{ r.rule_id }} v{{ r.version }} · {{ r.name }} <span class="tag">{{ r.category }}</span></h3>
+  <table><thead><tr><th>Feature</th><th>Quan sát</th><th>Ngưỡng</th></tr></thead><tbody>
+  {% for t in r.thresholds %}<tr><td class="mono">{{ t.feature }}</td><td class="num">{{ r.observed|get:t.feature|num }}</td><td class="num">{{ t.op }} {{ t.value|num }}</td></tr>{% endfor %}
+  </tbody></table><p class="small muted">Giới hạn: {{ r.limitation }}</p>{% endfor %}
+  {% if latest.explanation.ml.status == "SCORED" %}
+  <h3>ML: độ lệch so với baseline train</h3>
+  <p class="small muted">{{ latest.explanation.ml_explanation_note }} Điểm: {{ latest.explanation.ml.score|num }} / ngưỡng {{ latest.explanation.ml.threshold|num }} (v{{ latest.explanation.ml.threshold_version }}); bách phân vị theo {{ latest.explanation.ml.percentile_reference }}.</p>
+  <table><thead><tr><th>Feature</th><th class="num">Quan sát</th><th class="num">Median train</th><th class="num">p95 train</th><th class="num">p99 train</th><th class="num">Độ lệch (thang đo)</th></tr></thead><tbody>
+  {% for d in latest.explanation.ml.deviations %}<tr><td class="mono">{{ d.feature }}</td><td class="num">{{ d.observed|num }}</td><td class="num">{{ d.baseline_median|num }}</td><td class="num">{{ d.baseline_p95|num }}</td><td class="num">{{ d.baseline_p99|num }}</td><td class="num">{{ d.robust_deviation|num:2 }} <span class="small muted">{{ d.scale_basis }}{% if d.above_p99 %} · &gt; p99{% endif %}</span></td></tr>{% endfor %}
+  </tbody></table>
+  {% elif latest.explanation.ml.status %}<p class="small">ML: {% include "ui/_status.html" with s=latest.explanation.ml.status %} {{ latest.explanation.ml.reason }}</p>{% endif %}
+{% endif %}
+</section>
+</div>
+
+<h2>Dòng thời gian quyết định ({{ decisions|length }})</h2>
+<div class="tablewrap"><table><thead><tr><th>Cửa sổ (UTC)</th><th>Nguồn</th><th class="num">Sự kiện</th><th>Rules triggered</th><th>ML</th><th>Cấu hình</th></tr></thead><tbody>
+{% for d in decisions %}<tr><td class="small">{{ d.window_start|date:"Y-m-d H:i:s" }} → {{ d.window_end|date:"H:i:s" }}</td><td>{{ d.detection_source }}</td>
+<td class="num">{{ d.window.event_count|default:"—" }}</td>
+<td>{% for r in d.rule_results %}<span class="tag">{{ r.rule_id }}</span>{% empty %}—{% endfor %}</td>
+<td class="small">{% if d.ml.status == "SCORED" %}{{ d.ml.score|num }} ≥ {{ d.ml.threshold|num }}{% elif d.ml.status %}{{ d.ml.status }}{% else %}—{% endif %}</td>
+<td class="mono small">{{ d.config_snapshot.cfg_hash|default:"" }} {{ d.config_snapshot.policy|default:"" }}</td></tr>{% endfor %}
+</tbody></table></div>
+
+{% if latest and latest.window %}
+<h2>Feature window mới nhất</h2>
+<details><summary>Giá trị feature, coverage và cấu hình cửa sổ (JSON đã vệ sinh)</summary><pre>{{ explanation_json }}</pre></details>
+{% endif %}
+
+<h2>Sự kiện liên quan (đã redact, tối đa 50)</h2>
+{% if can_raw %}<p class="small">{% if show_raw %}<a href="?">Ẩn raw identity</a>{% else %}<a href="?raw=1">Hiện raw identity (admin, có audit)</a>{% endif %}</p>{% endif %}
+<div class="tablewrap"><table><thead><tr><th>Thời gian (UTC)</th><th>Domain</th><th>Entity</th>{% if show_raw %}<th>Raw</th>{% endif %}<th>Trường (allowlist)</th><th>Flags</th><th>Locator</th></tr></thead><tbody>
+{% for e in events %}<tr><td class="small">{{ e.time|date:"Y-m-d H:i:s.u"|slice:":23" }}</td><td>{{ e.domain }}</td><td class="mono small">{{ e.entity|short:16 }}{% if e.user %}<br>{{ e.user|short:16 }}{% endif %}</td>
+{% if show_raw %}<td class="mono small">{{ e.entity_raw|default:"(không lưu)" }}{% if e.user_raw %}<br>{{ e.user_raw }}{% endif %}</td>{% endif %}
+<td class="mono small">{% for k, v in e.fields|items_sorted %}{{ k }}={{ v }} {% endfor %}</td><td class="small">{{ e.flags|join:", " }}</td><td class="mono small">{{ e.locator }}</td></tr>
+{% empty %}<tr><td colspan="7" class="muted">Không có sự kiện mẫu (có thể đã hết retention).</td></tr>{% endfor %}
+</tbody></table></div>
+
+{% if correlated %}
+<h2>Tương quan upstream IDS (cùng IP pseudonym, ±10 phút)</h2>
+<p class="note">Chỉ là tương quan theo pseudonym IP và thời gian; không khẳng định cùng sự kiện. Flow ID chỉ có nghĩa trong một sensor.</p>
+<ul>{% for c in correlated %}<li><a href="{% url 'alert_detail' c.alert_id %}">#{{ c.alert_id }}</a> {{ c.window_start|date:"H:i:s" }} {{ c.alert.title }} (sensor {{ c.explanation.sensor }})</li>{% endfor %}</ul>
+{% endif %}
+
+<div class="grid">
+<section class="panel"><h2>Triage</h2>
+{% for t in triage %}<p class="small"><strong>{{ t.actor_label }}</strong> {{ t.created_at|date:"Y-m-d H:i" }}: {{ t.from_status }}→{{ t.to_status }}, {{ t.from_assessment }}→{{ t.to_assessment }}{% if t.note %}<br>{{ t.note|linebreaksbr }}{% endif %}</p>{% empty %}<p class="muted small">Chưa có.</p>{% endfor %}
+{% if atd_is_analyst %}
+<form method="post" action="{% url 'alert_triage' alert.pk %}" class="stack">{% csrf_token %}
+  {% for f in triage_form %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endfor %}
+  <p class="small muted">Feedback được lưu kèm người/thời gian/lý do; không tự đưa vào training và không sửa ground truth thí nghiệm.</p>
+  <p><button type="submit">Ghi nhận</button></p>
+</form>
+{% endif %}
+</section>
+{% if atd_is_analyst and alert.entity_key %}
+<section class="panel"><h2>Suppression có thời hạn</h2>
+<form method="post" action="{% url 'alert_suppress' alert.pk %}" class="stack" data-confirm="Tạo suppression? Alert mới vẫn được lưu và có thể xem khi lọc.">{% csrf_token %}
+  {% for f in suppress_form %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endfor %}
+  <p><button type="submit" class="secondary">Tạo suppression</button></p>
+</form></section>
+{% endif %}
+<section class="panel"><h2>Gợi ý kiểm tra (không tự động)</h2>
+<ul class="small">
+  <li>Đối chiếu entity với danh sách hệ thống nội bộ/NAT/batch job đã biết.</li>
+  <li>Xem rule "review hint" và giới hạn ở trên; kiểm tra thời gian trùng sự cố vận hành.</li>
+  <li>Nếu AUTH: kiểm tra có đăng nhập thành công sau chuỗi thất bại không và liên hệ chủ tài khoản qua kênh riêng.</li>
+  <li>Ghi đánh giá TRUE_POSITIVE / FALSE_POSITIVE / EXPECTED_BEHAVIOR kèm lý do.</li>
+</ul></section>
+</div>
+{% endblock %}

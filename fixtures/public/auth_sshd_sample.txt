@@ -1,0 +1,63 @@
+2026-03-02T00:05:00.000000+00:00 sample-host sshd[6977]: Accepted publickey for lab-alice from 192.0.2.20 port 51402 ssh2: ED25519 SHA256:sample
+2026-03-02T00:06:00.000000+00:00 sample-host sshd[2168]: Accepted publickey for lab-bob from 192.0.2.21 port 50178 ssh2: ED25519 SHA256:sample
+2026-03-02T00:07:00.000000+00:00 sample-host sshd[6487]: Failed password for lab-carol from 192.0.2.22 port 58763 ssh2
+2026-03-02T00:07:20.000000+00:00 sample-host sshd[8469]: Accepted publickey for lab-carol from 192.0.2.22 port 54488 ssh2: ED25519 SHA256:sample
+2026-03-02T00:17:00.000000+00:00 sample-host CRON[2167]: pam_unix(cron:session): session opened for user lab-svc(uid=1001) by (uid=0)
+2026-03-02T00:25:34.513689+00:00 sample-host sshd[8267]: Accepted publickey for lab-alice from 192.0.2.20 port 51084 ssh2: ED25519 SHA256:sample
+2026-03-02T00:34:43.752412+00:00 sample-host sshd[8757]: Accepted publickey for lab-bob from 192.0.2.21 port 45916 ssh2: ED25519 SHA256:sample
+2026-03-02T00:35:43.051021+00:00 sample-host sshd[2274]: Accepted publickey for lab-carol from 192.0.2.22 port 50125 ssh2: ED25519 SHA256:sample
+2026-03-02T00:45:54.909627+00:00 sample-host sshd[4827]: Accepted publickey for lab-alice from 192.0.2.20 port 55525 ssh2: ED25519 SHA256:sample
+2026-03-02T01:02:11.532326+00:00 sample-host sshd[6624]: Accepted publickey for lab-bob from 192.0.2.21 port 47836 ssh2: ED25519 SHA256:sample
+2026-03-02T01:13:51.878426+00:00 sample-host sshd[6952]: Accepted publickey for lab-carol from 192.0.2.22 port 42078 ssh2: ED25519 SHA256:sample
+2026-03-02T01:17:00.000000+00:00 sample-host CRON[7397]: pam_unix(cron:session): session opened for user lab-svc(uid=1001) by (uid=0)
+2026-03-02T01:21:22.919863+00:00 sample-host sshd[8476]: Accepted publickey for lab-alice from 192.0.2.20 port 42482 ssh2: ED25519 SHA256:sample
+2026-03-02T01:30:00.000000+00:00 sample-host sshd[9674]: Failed password for root from 203.0.113.66 port 50000 ssh2
+2026-03-02T01:30:04.451227+00:00 sample-host sshd[8924]: Invalid user test from 203.0.113.66 port 50001
+2026-03-02T01:30:04.451227+00:00 sample-host sshd[5441]: Failed password for invalid user test from 203.0.113.66 port 50001 ssh2
+2026-03-02T01:30:09.397090+00:00 sample-host sshd[4311]: Failed password for root from 203.0.113.66 port 50002 ssh2
+2026-03-02T01:30:13.600422+00:00 sample-host sshd[2913]: Failed password for lab-bob from 203.0.113.66 port 50003 ssh2
+2026-03-02T01:30:18.281917+00:00 sample-host sshd[3094]: Failed password for lab-bob from 203.0.113.66 port 50004 ssh2
+2026-03-02T01:30:21.375080+00:00 sample-host sshd[7844]: Failed password for lab-bob from 203.0.113.66 port 50005 ssh2
+2026-03-02T01:30:27.300154+00:00 sample-host sshd[6817]: Invalid user admin from 203.0.113.66 port 50006
+2026-03-02T01:30:27.300154+00:00 sample-host sshd[7351]: Failed password for invalid user admin from 203.0.113.66 port 50006 ssh2
+2026-03-02T01:30:29.840296+00:00 sample-host sshd[6173]: Failed password for lab-bob from 203.0.113.66 port 50007 ssh2
+2026-03-02T01:30:33.293610+00:00 sample-host sshd[8656]: Failed password for root from 203.0.113.66 port 50008 ssh2
+2026-03-02T01:30:38.923376+00:00 sample-host sshd[3876]: Failed password for lab-bob from 203.0.113.66 port 50009 ssh2
+2026-03-02T01:30:41.137045+00:00 sample-host sshd[7494]: Invalid user admin from 203.0.113.66 port 50010
+2026-03-02T01:30:41.137045+00:00 sample-host sshd[3466]: Failed password for invalid user admin from 203.0.113.66 port 50010 ssh2
+2026-03-02T01:30:44.750252+00:00 sample-host sshd[1491]: Failed password for lab-bob from 203.0.113.66 port 50011 ssh2
+2026-03-02T01:30:48.105975+00:00 sample-host sshd[9758]: Failed password for lab-bob from 203.0.113.66 port 50012 ssh2
+2026-03-02T01:30:51.182610+00:00 sample-host sshd[8612]: Failed password for lab-bob from 203.0.113.66 port 50013 ssh2
+2026-03-02T01:30:54.024989+00:00 sample-host sshd[3164]: Failed password for lab-bob from 203.0.113.66 port 50014 ssh2
+2026-03-02T01:30:56.346359+00:00 sample-host sshd[4902]: Failed password for lab-bob from 203.0.113.66 port 50015 ssh2
+2026-03-02T01:30:58.447271+00:00 sample-host sshd[1114]: Failed password for root from 203.0.113.66 port 50016 ssh2
+2026-03-02T01:31:02.026900+00:00 sample-host sshd[4017]: Failed password for root from 203.0.113.66 port 50017 ssh2
+2026-03-02T01:31:05.268916+00:00 sample-host sshd[2080]: Failed password for root from 203.0.113.66 port 50018 ssh2
+2026-03-02T01:31:08.521222+00:00 sample-host sshd[7447]: Failed password for lab-bob from 203.0.113.66 port 50019 ssh2
+2026-03-02T01:31:11.065832+00:00 sample-host sshd[1006]: Invalid user test from 203.0.113.66 port 50020
+2026-03-02T01:31:11.065832+00:00 sample-host sshd[3804]: Failed password for invalid user test from 203.0.113.66 port 50020 ssh2
+2026-03-02T01:31:13.698650+00:00 sample-host sshd[7430]: Invalid user test from 203.0.113.66 port 50021
+2026-03-02T01:31:13.698650+00:00 sample-host sshd[1713]: Failed password for invalid user test from 203.0.113.66 port 50021 ssh2
+2026-03-02T01:31:18.677375+00:00 sample-host sshd[3351]: Invalid user admin from 203.0.113.66 port 50022
+2026-03-02T01:31:18.677375+00:00 sample-host sshd[9648]: Failed password for invalid user admin from 203.0.113.66 port 50022 ssh2
+2026-03-02T01:31:22.979868+00:00 sample-host sshd[4963]: Invalid user test from 203.0.113.66 port 50023
+2026-03-02T01:31:22.979868+00:00 sample-host sshd[9176]: Failed password for invalid user test from 203.0.113.66 port 50023 ssh2
+2026-03-02T01:31:26.249767+00:00 sample-host sshd[7156]: Invalid user admin from 203.0.113.66 port 50024
+2026-03-02T01:31:26.249767+00:00 sample-host sshd[3375]: Failed password for invalid user admin from 203.0.113.66 port 50024 ssh2
+2026-03-02T01:31:32.116288+00:00 sample-host sshd[2394]: Accepted password for lab-bob from 203.0.113.66 port 50100 ssh2
+2026-03-02T01:31:32.116288+00:00 sample-host sshd[5581]: message repeated 2 times: [ Failed password for root from 203.0.113.67 port 50200 ssh2]
+2026-03-02T01:38:41.112198+00:00 sample-host sshd[4279]: Accepted publickey for lab-carol from 192.0.2.22 port 43141 ssh2: ED25519 SHA256:sample
+2026-03-02T01:43:20.714838+00:00 sample-host sshd[8793]: Accepted publickey for lab-bob from 192.0.2.21 port 56204 ssh2: ED25519 SHA256:sample
+2026-03-02T01:43:35.373413+00:00 sample-host sshd[1094]: Accepted publickey for lab-alice from 192.0.2.20 port 40407 ssh2: ED25519 SHA256:sample
+2026-03-02T02:10:40.988396+00:00 sample-host sshd[2610]: Accepted publickey for lab-alice from 192.0.2.20 port 43104 ssh2: ED25519 SHA256:sample
+2026-03-02T02:15:09.978117+00:00 sample-host sshd[6186]: Accepted publickey for lab-bob from 192.0.2.21 port 41683 ssh2: ED25519 SHA256:sample
+2026-03-02T02:17:00.000000+00:00 sample-host CRON[1839]: pam_unix(cron:session): session opened for user lab-svc(uid=1001) by (uid=0)
+2026-03-02T02:23:19.449595+00:00 sample-host sshd[6910]: Accepted publickey for lab-carol from 192.0.2.22 port 50670 ssh2: ED25519 SHA256:sample
+2026-03-02T02:55:15.958970+00:00 sample-host sshd[3222]: Accepted publickey for lab-bob from 192.0.2.21 port 51223 ssh2: ED25519 SHA256:sample
+2026-03-02T02:59:54.615866+00:00 sample-host sshd[1632]: Accepted publickey for lab-alice from 192.0.2.20 port 46914 ssh2: ED25519 SHA256:sample
+2026-03-02T03:00:42.045387+00:00 sample-host sshd[4763]: Accepted publickey for lab-carol from 192.0.2.22 port 43124 ssh2: ED25519 SHA256:sample
+2026-03-02T03:17:00.000000+00:00 sample-host CRON[9621]: pam_unix(cron:session): session opened for user lab-svc(uid=1001) by (uid=0)
+2026-03-02T03:27:44.189897+00:00 sample-host sshd[1744]: Accepted publickey for lab-alice from 192.0.2.20 port 58765 ssh2: ED25519 SHA256:sample
+2026-03-02T03:30:14.788927+00:00 sample-host sshd[1294]: Accepted publickey for lab-bob from 192.0.2.21 port 52879 ssh2: ED25519 SHA256:sample
+2026-03-02T03:37:45.831695+00:00 sample-host sshd[2938]: Accepted publickey for lab-carol from 192.0.2.22 port 53019 ssh2: ED25519 SHA256:sample
+2026-03-02T03:59:00.116825+00:00 sample-host sshd[2530]: Accepted publickey for lab-alice from 192.0.2.20 port 57201 ssh2: ED25519 SHA256:sample

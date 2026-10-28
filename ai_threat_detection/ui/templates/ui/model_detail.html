@@ -1,0 +1,49 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}{{ mv.model_id }}{% endblock %}
+{% block content %}
+<h1 class="mono">{{ mv.model_id }} {% include "ui/_status.html" with s=mv.status %}</h1>
+<div class="grid">
+<section class="panel"><h2>Thông tin</h2>
+<dl class="kv">
+  <dt>Domain</dt><dd>{{ mv.domain }} (chỉ dùng cho {{ mv.domain }})</dd><dt>Thuật toán</dt><dd>{{ mv.algorithm }}</dd>
+  <dt>Feature set</dt><dd>{{ mv.feature_set }} · {{ mv.feature_schema_version }}</dd>
+  <dt>Feature order</dt><dd class="mono small">{{ mv.feature_order|join:", " }}</dd>
+  <dt>Window</dt><dd>{{ mv.window_config.kind }} {{ mv.window_config.size_s }} s / stride {{ mv.window_config.stride_s }} s / lateness {{ mv.window_config.allowed_lateness_s }} s</dd>
+  <dt>Hyperparameters</dt><dd class="mono small">{{ mv.hyperparameters }}; random_state={{ mv.random_state }}</dd>
+  <dt>Train</dt><dd>{{ mv.n_train }} cửa sổ, cutoff {{ mv.train_cutoff|date:"Y-m-d H:i" }}, {{ mv.training_seconds }} s fit</dd>
+  <dt>Loại trừ khi train</dt><dd class="mono small">{{ mv.train_exclusions }}</dd>
+  <dt>Score</dt><dd class="small">{{ mv.score_transform }} — không phải xác suất tấn công</dd>
+  <dt>Ngưỡng</dt><dd>{{ mv.threshold|num:4 }} (v{{ mv.threshold_version }}) · <span class="small">{{ mv.threshold_criterion }}</span></dd>
+  <dt>Artifact</dt><dd class="mono small">{{ mv.artifact_format }} sha256 {{ mv.artifact_sha256|slice:":20" }}… · integrity key {{ mv.integrity_key_id }}</dd>
+  <dt>Dependencies</dt><dd class="mono small">{{ mv.dependencies }}</dd>
+  <dt>Experiment</dt><dd>{% if mv.experiment %}<a href="{% url 'experiment_detail' mv.experiment.exp_id %}">{{ mv.experiment.exp_id }}</a> · split {{ mv.split_manifest_sha256|slice:":12" }}…{% else %}—{% endif %}</dd>
+  <dt>Save/load</dt><dd>chênh lệch score lớn nhất sau reload: {{ mv.validation_metrics.save_load_max_abs_score_diff|num:6 }}</dd>
+</dl></section>
+{% if atd_is_admin %}
+<section class="panel"><h2>Thao tác (admin, có audit)</h2>
+  <form method="post" action="{% url 'model_action' mv.model_id %}" class="stack" data-confirm="Thực hiện thao tác trên model?">{% csrf_token %}
+    <label for="act">Thao tác</label>
+    <select name="action" id="act">{% if not is_active %}<option value="activate">Kích hoạt</option>{% endif %}{% if is_active %}<option value="rollback">Rollback về model trước</option><option value="deactivate">Tắt (rules-only)</option>{% endif %}</select>
+    <label for="r1">Lý do</label><input type="text" name="reason" id="r1" required minlength="5">
+    <p><button type="submit">Thực hiện</button></p>
+  </form>
+  <form method="post" action="{% url 'model_action' mv.model_id %}" class="stack" data-confirm="Đổi ngưỡng? Ngưỡng mới không còn là ngưỡng chọn trên validation.">{% csrf_token %}
+    <input type="hidden" name="action" value="threshold">
+    <label for="thr">Ngưỡng mới (anomaly_score)</label><input type="number" step="0.0001" min="0.0001" max="1" name="threshold" id="thr" value="{{ mv.threshold|stringformat:'.4f' }}">
+    <label for="r2">Lý do</label><input type="text" name="reason" id="r2" required minlength="5">
+    <p><button type="submit" class="secondary">Đổi ngưỡng</button></p>
+  </form>
+</section>
+{% endif %}
+</div>
+<h2>Validation (chọn ngưỡng/hyperparameters) — T1_SUSPICIOUS</h2>
+{% include "ui/_metrics.html" with task=mv.validation_metrics.tasks.T1_SUSPICIOUS %}
+<h2>Test (frozen) — T1_SUSPICIOUS</h2>
+{% include "ui/_metrics.html" with task=mv.test_metrics.tasks.T1_SUSPICIOUS %}
+<h2>Test (frozen) — T2_ANOMALOUS</h2>
+{% include "ui/_metrics.html" with task=mv.test_metrics.tasks.T2_ANOMALOUS %}
+{% if mv.test_metrics.timing %}<p class="small">Timing test: {{ mv.test_metrics.timing }}</p>{% endif %}
+<h2>Model card</h2>
+{% if card %}<pre>{{ card }}</pre>{% else %}<p class="muted">Chưa có.</p>{% endif %}
+{% endblock %}

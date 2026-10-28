@@ -1,0 +1,14 @@
+{% extends "ui/base.html" %}
+{% block title %}Sửa {{ rc.rule_id }}{% endblock %}
+{% block content %}
+<h1>Sửa rule {{ rc.rule_id }} (đang ở v{{ rc.version }})</h1>
+<p class="note">Định nghĩa là dữ liệu JSON: chỉ các khóa, feature (allowlist theo domain) và toán tử (&gt;=, &gt;, &lt;=, &lt;, ==) cho phép. Không chấp nhận biểu thức, Python hay shell.</p>
+<form method="post" class="stack panel">{% csrf_token %}
+  <label for="id_definition">Định nghĩa</label>{{ form.definition }}{{ form.definition.errors }}
+  <label>{{ form.enabled }} Bật rule</label>
+  <label for="id_reason">Lý do thay đổi (bắt buộc)</label>{{ form.reason }}{{ form.reason.errors }}
+  <p><button type="submit">Lưu version mới</button> <a href="{% url 'settings' %}" class="btn secondary">Hủy</a></p>
+</form>
+<h2>Lịch sử</h2>
+<ul class="small">{% for h in history %}<li>v{{ h.version }} · {{ h.created_at|date:"Y-m-d H:i" }} · {{ h.actor_label }} · {{ h.reason }} · {{ h.enabled|yesno:"bật,tắt" }}</li>{% endfor %}</ul>
+{% endblock %}

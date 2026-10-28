@@ -1,0 +1,51 @@
+{% extends "ui/base.html" %}
+{% load atd %}
+{% block title %}Nguồn {{ src.name }}{% endblock %}
+{% block content %}
+<h1>Nguồn {{ src.name }}</h1>
+<div class="grid">
+<section class="panel"><h2>Cấu hình</h2>
+<dl class="kv">
+  <dt>Loại / schema</dt><dd>{{ src.get_source_type_display }} · {{ adapter.schema_version }}</dd>
+  <dt>Provenance</dt><dd>{{ src.provenance }}</dd><dt>Privacy</dt><dd>{{ src.privacy_class }}</dd>
+  {% if show_root %}<dt>Root</dt><dd class="mono small">{{ src.root_path }}</dd>{% endif %}
+  <dt>Mẫu file</dt><dd class="mono">{{ src.file_pattern }}</dd>
+  <dt>Timezone giả định</dt><dd>{{ src.assume_timezone|default:"không (timestamp thiếu offset bị từ chối: missing_timezone)" }}</dd>
+  <dt>Sensor</dt><dd>{{ src.sensor_name }}</dd><dt>Pseudonym scope</dt><dd>{{ src.pseudonym_scope }}</dd>
+  <dt>Lưu raw identity</dt><dd>{{ src.store_raw_identity|yesno:"có (chỉ admin xem),không" }}</dd>
+  <dt>Stale sau</dt><dd>{{ src.stale_after_seconds }} s</dd><dt>License</dt><dd>{{ src.license_note|default:"—" }}</dd>
+</dl></section>
+<section class="panel"><h2>Tình trạng</h2>
+{% if health %}<dl class="kv"><dt>Trạng thái</dt><dd>{% include "ui/_status.html" with s=health.status %} {{ health.detail }}</dd>
+<dt>Lần poll cuối</dt><dd>{{ health.last_poll_at|date:"Y-m-d H:i:s"|default:"—" }}</dd><dt>Dữ liệu mới cuối</dt><dd>{{ health.last_data_at|date:"Y-m-d H:i:s"|default:"—" }}</dd>
+<dt>Event time cuối</dt><dd>{{ health.last_event_time|date:"Y-m-d H:i:s"|default:"—" }}</dd></dl>
+{% else %}<p>{% include "ui/_status.html" with s="NEVER_RUN" %}</p>{% endif %}
+<h3>Domain đã nhận</h3>{% for d in domains %}<span class="tag">{{ d.domain }}: {{ d.n }}</span>{% empty %}<span class="muted">—</span>{% endfor %}
+<h3>Lý do từ chối</h3>{% for r in reasons %}<span class="tag">{{ r.reason }}: {{ r.n }}</span>{% empty %}<span class="muted">không có</span>{% endfor %}
+</section>
+<section class="panel"><h2>Trường được hỗ trợ</h2>
+<table><tbody>{% for k, v in adapter.supported_fields.items %}<tr><td class="mono small">{{ k }}</td><td class="small">{{ v }}</td></tr>{% endfor %}</tbody></table>
+<p class="note">Chỉ các trường trên được giữ (allowlist). Header, cookie, body, query value và trường khác bị loại trước khi lưu.</p></section>
+</div>
+
+{% if atd_is_admin %}
+<h2>Chạy job (admin)</h2>
+{% if files_error %}<p class="errorlist">{{ files_error }}</p>{% endif %}
+<form method="post" class="filters panel">{% csrf_token %}
+  <label>Thao tác <select name="action"><option value="import">Import batch</option><option value="replay">Replay (namespace replay:)</option><option value="follow">Follow (có giới hạn thời gian)</option></select></label>
+  <label>File <select name="file">{% for f in files %}<option value="{{ f }}">{{ f }}</option>{% empty %}<option value="">(không có file khớp mẫu)</option>{% endfor %}</select></label>
+  <label>Tốc độ replay <input type="number" name="speed" value="0" min="0" step="0.5"></label>
+  <label>Follow (giây) <input type="number" name="duration" value="60" min="5" max="86400"></label>
+  <button type="submit">Xếp hàng</button>
+</form>
+{% endif %}
+
+<h2>Lần nhập</h2>
+{% if runs %}
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Chế độ</th><th>Namespace</th><th>File</th><th>Trạng thái</th><th class="num">Đọc</th><th class="num">Nhận</th><th class="num">Trùng</th><th class="num">Từ chối</th><th class="num" title="Dòng ngoài phạm vi adapter (vd. cron/sudo trong auth.log), không phải lỗi parse">Bỏ qua</th><th class="num">Partial</th><th class="num">Late</th><th class="num">Future</th><th class="num">Gap lớn nhất (s)</th><th>Ghi chú</th></tr></thead><tbody>
+{% for r in runs %}<tr><td>{{ r.pk }}</td><td>{{ r.mode }}</td><td class="small">{{ r.namespace }}</td><td class="mono small">{{ r.file_rel|short:40 }}</td><td>{% include "ui/_status.html" with s=r.status %}</td>
+<td class="num">{{ r.records_seen|num }}</td><td class="num">{{ r.accepted|num }}</td><td class="num">{{ r.duplicates|num }}</td><td class="num">{{ r.rejected|num }}</td><td class="num">{{ r.skipped|num }}</td><td class="num">{{ r.partial_pending }}</td>
+<td class="num">{{ r.late_events }}</td><td class="num">{{ r.future_events }}</td><td class="num">{{ r.max_event_gap_seconds|num:1 }}</td><td class="small">{{ r.notes|join:", " }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p class="muted">Chưa có.</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{
+  "note": "Narrow exceptions: each entry matches one finding kind in one file and the excerpt must contain the given substring. Reasons are required.",
+  "entries": [
+    {"path": "ai_threat_detection/demo/synthetic.py", "kind": "secret:jwt", "match": "Bearer eyJhbG", "reason": "Fake JWT the synthetic generator injects so the importer's redaction is exercised; payload decodes to the word 'synthetic'."},
+    {"path": "ai_threat_detection/publishing/publish_check.py", "kind": "assistant_branding", "match": "claude|anthropic", "reason": "The branding detection regex itself."},
+    {"path": "tests/test_privacy_parsers.py", "kind": "secret:jwt", "match": "Bearer abcdef123456", "reason": "Fake token in a redaction unit test."},
+    {"path": "tests/test_worker_publish.py", "kind": "secret:private_key", "match": "BEGIN RSA PRIVATE KEY", "reason": "Header-only string proving publish_check detects private keys."},
+    {"path": "tests/test_worker_publish.py", "kind": "home_path", "match": "Users\\someone", "reason": "Fake home path proving publish_check detects home paths."},
+    {"path": "tests/test_worker_publish.py", "kind": "email", "match": "real.person@company-domain.com", "reason": "Fake address proving publish_check detects emails."},
+    {"path": "tests/test_worker_publish.py", "kind": "ip_address", "match": "10.1.2.3", "reason": "Fake private IP proving publish_check detects IPs."},
+    {"path": "tests/test_worker_publish.py", "kind": "ip_address", "match": "8.8.8.8", "reason": "Well-known public resolver address used only as a detection test value."},
+    {"path": "tests/test_worker_publish.py", "kind": "secret:assigned_secret", "match": "api_key = 'abcdef", "reason": "Fake assigned secret proving detection."}
+  ]
+}

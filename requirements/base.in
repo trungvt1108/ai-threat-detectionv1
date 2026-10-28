@@ -1,0 +1,6 @@
+# Runtime dependencies (pinned in requirements/base.lock)
+Django==5.2.18
+scikit-learn==1.9.1
+numpy
+skops==0.16.0
+tzdata

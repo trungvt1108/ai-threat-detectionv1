@@ -1,0 +1,9 @@
+{% load atd %}{% if task %}
+<p class="small muted">{{ task.task_description }} Đơn vị: {{ task.unit }}; rules: {{ task.rules_used }}. Loại UNKNOWN: {{ task.units_excluded_unknown_label }}. Thời gian quan sát: {{ task.observed_hours }} giờ.</p>
+<div class="tablewrap"><table><thead><tr><th>Phương pháp</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">TP</th><th class="num">FP</th><th class="num">FN</th><th class="num">TN</th><th class="num">Support +/−</th><th class="num">FP / 1000 cửa sổ âm</th><th class="num">FP cửa sổ / giờ</th><th class="num">Alert nhóm (không chứa +)</th></tr></thead><tbody>
+{% for name, m in task.methods.items %}<tr><td>{{ name }}</td><td class="num">{{ m.precision|pct }}</td><td class="num">{{ m.recall|pct }}</td><td class="num">{{ m.f1|pct }}</td>
+<td class="num">{{ m.tp }}</td><td class="num">{{ m.fp }}</td><td class="num">{{ m.fn }}</td><td class="num">{{ m.tn }}</td><td class="num">{{ m.support_positive }} / {{ m.support_negative }}</td>
+<td class="num">{{ m.fp_per_1000_negative_windows|num:2 }}</td><td class="num">{{ m.fp_windows_per_observed_hour|num:2 }}</td><td class="num">{{ m.grouped_alerts.total }} ({{ m.grouped_alerts.without_positive_window }})</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="small">Average precision của ML score: <strong>{{ task.ml_ranking.value|num }}</strong> trên {{ task.ml_ranking.support_scored }} cửa sổ được chấm ({{ task.ml_ranking.support_scored_positive }} positive; prevalence {{ task.ml_ranking.prevalence_baseline|num:4 }}); abstain {{ task.ml_ranking.abstained_windows }}. <span class="muted">{{ task.ml_ranking.metric }}</span></p>
+{% else %}<p class="muted">Chưa có.</p>{% endif %}

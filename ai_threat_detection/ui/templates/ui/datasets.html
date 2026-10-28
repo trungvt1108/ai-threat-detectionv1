@@ -1,0 +1,34 @@
+{% extends "ui/base.html" %}
+{% block title %}Dataset{% endblock %}
+{% block content %}
+<h1>Dataset</h1>
+{% if datasets %}
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Provenance</th><th>Privacy</th><th>License</th><th>Captures</th><th>Trạng thái</th><th>Manifest sha256</th></tr></thead><tbody>
+{% for d in datasets %}<tr><td><a href="{% url 'dataset_detail' d.dataset_id %}">{{ d.dataset_id }}</a></td><td><span class="badge st-neutral">{{ d.provenance }}</span></td><td>{{ d.privacy_class }}</td>
+<td class="small">{{ d.license }}</td><td>{{ d.n_captures }}</td><td>{{ d.status }}</td><td class="mono small">{{ d.manifest_sha256|slice:":16" }}…</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p class="muted">Chưa đăng ký dataset.</p>{% endif %}
+<p class="note">SYNTHETIC_DEMO chỉ chứng minh hành vi trên dữ liệu tổng hợp. LAB_OBSERVED là log do fixture của dự án ghi lại trên loopback, không phải production.</p>
+
+{% if atd_is_admin %}
+{% if unregistered %}
+<h2>Dataset trên đĩa chưa import</h2>
+{% for d in unregistered %}
+<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="import"><input type="hidden" name="dataset_id" value="{{ d }}"><button type="submit" class="secondary">Import {{ d }}</button></form>
+{% endfor %}
+{% endif %}
+<div class="grid">
+<form method="post" class="stack panel" data-confirm="Tạo dataset SYNTHETIC_DEMO (dữ liệu tổng hợp, gắn nhãn demo)?">{% csrf_token %}
+  <h2>Tạo dataset tổng hợp (DEMO)</h2><input type="hidden" name="action" value="synthetic">
+  {% for f in synthetic_form %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endfor %}
+  <p><button type="submit">Tạo</button></p>
+</form>
+<form method="post" class="stack panel" data-confirm="Chạy fixture service trên 127.0.0.1 và driver kịch bản vô hại?">{% csrf_token %}
+  <h2>Lab capture (fixture loopback)</h2><input type="hidden" name="action" value="lab">
+  {% for f in lab_form %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endfor %}
+  <p class="small muted">Driver chỉ gửi request tới fixture do job này khởi động. Không nhận URL tùy ý.</p>
+  <p><button type="submit">Chạy</button></p>
+</form>
+</div>
+{% endif %}
+{% endblock %}

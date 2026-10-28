@@ -1,0 +1,42 @@
+{% load static %}<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AI Threat Detection{% endblock %} · ATD</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{% static 'atd/app.css' %}">
+  <script type="module" src="{% static 'atd/app.js' %}"></script>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua tới nội dung</a>
+<header class="topbar">
+  <div class="brand"><a href="{% url 'overview' %}">AI Threat Detection</a> <span class="env">local · 127.0.0.1</span></div>
+  {% if user.is_authenticated %}
+  <nav aria-label="Điều hướng chính">
+    <a href="{% url 'overview' %}">Tổng quan</a>
+    <a href="{% url 'alerts' %}">Cảnh báo</a>
+    <a href="{% url 'sources' %}">Nguồn</a>
+    <a href="{% url 'datasets' %}">Dataset</a>
+    <a href="{% url 'experiments' %}">Thí nghiệm</a>
+    <a href="{% url 'models' %}">Mô hình</a>
+    <a href="{% url 'drift' %}">Drift &amp; chất lượng</a>
+    <a href="{% url 'reports' %}">Báo cáo</a>
+    <a href="{% url 'jobs' %}">Jobs</a>
+    {% if atd_is_admin %}<a href="{% url 'audit' %}">Audit</a>{% endif %}
+    <a href="{% url 'settings' %}">Cài đặt</a>
+  </nav>
+  <div class="who">
+    <a href="{% url 'notifications' %}" class="notif">Thông báo{% if atd_unread %} <span class="count">{{ atd_unread }}</span>{% endif %}</a>
+    <span>{{ user.get_username }} ({{ atd_role|default:"không có vai trò" }})</span>
+    <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button type="submit" class="link">Đăng xuất</button></form>
+  </div>
+  {% endif %}
+</header>
+<main id="main" tabindex="-1">
+  {% if messages %}<ul class="messages" role="status">{% for m in messages %}<li class="msg-{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="foot">Console phân tích local. Không tự chặn IP, khóa tài khoản hay thực thi phản ứng. Anomaly score không phải xác suất tấn công.</footer>
+</body>
+</html>

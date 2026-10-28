@@ -1,0 +1,10 @@
+{% extends "ui/base.html" %}
+{% block title %}Audit{% endblock %}
+{% block content %}
+<h1>Audit log</h1>
+<div class="tablewrap"><table><thead><tr><th>Lúc (UTC)</th><th>Người</th><th>Hành động</th><th>Đối tượng</th><th>Lý do</th><th>Chi tiết</th></tr></thead><tbody>
+{% for a in page %}<tr><td class="small">{{ a.created_at|date:"Y-m-d H:i:s" }}</td><td>{{ a.actor_label }}</td><td class="mono small">{{ a.action }}</td><td class="mono small">{{ a.object_type }}:{{ a.object_id }}</td><td class="small">{{ a.reason }}</td><td class="mono small">{{ a.details }}</td></tr>
+{% empty %}<tr><td colspan="6" class="muted">Trống.</td></tr>{% endfor %}
+</tbody></table></div>
+<div class="pager">{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">← Trước</a>{% endif %} Trang {{ page.number }}/{{ page.paginator.num_pages }} {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Sau →</a>{% endif %}</div>
+{% endblock %}
